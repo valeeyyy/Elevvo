@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timelyne - Task 1</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button
+    class="topbar__trigger"
+    id="openTrigger"
+    type="button"
+    aria-label="Open menu"
+    aria-controls="sidebar"
+    aria-expanded="false"
+  >
+    <i class="fa-solid fa-bars" aria-hidden="true"></i>
+  </button>
+  <span class="topbar__brand">Timelyne</span>
+</header>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="sidebar" id="sidebar" data-state="open">
+  <div class="sidebar__header">
+    <div class="logo" aria-hidden="true">
+      <i class="fa-solid fa-clock" aria-hidden="true"></i>
+    </div>
+    <span class="sidebar__brand">Timelyne</span>
+    <button
+      class="sidebar__toggle"
+      id="toggle"
+      type="button"
+      aria-label="Collapse sidebar"
+      aria-expanded="true"
+    >
+      <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <nav class="sidebar__nav" aria-label="Primary">
+    <ul>
+      <li>
+        <a href="#dashboard" class="nav-link is-active" aria-current="page">
+          <i class="nav-link__icon fa-solid fa-layer-group" aria-hidden="true"></i>
+          <span class="nav-link__label">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="#tasks" class="nav-link">
+          <i class="nav-link__icon fa-solid fa-square-check" aria-hidden="true"></i>
+          <span class="nav-link__label">Tasks</span>
+        </a>
+      </li>
+      <li>
+        <a href="#calendar" class="nav-link">
+          <i class="nav-link__icon fa-solid fa-calendar-days" aria-hidden="true"></i>
+          <span class="nav-link__label">Calendar</span>
+        </a>
+      </li>
+      <li>
+        <a href="#reminders" class="nav-link">
+          <i class="nav-link__icon fa-solid fa-bell" aria-hidden="true"></i>
+          <span class="nav-link__label">Reminders</span>
+        </a>
+      </li>
+      <li>
+        <a href="#settings" class="nav-link">
+          <i class="nav-link__icon fa-solid fa-gear" aria-hidden="true"></i>
+          <span class="nav-link__label">Settings</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</aside>
+
+<main class="content">
+  <header class="content__topbar">
+    <h1 class="content__title" id="pageTitle">Dashboard</h1>
+  </header>
+  <div class="content__body">
+    <h2 class="content__welcome">Welcome back, Marsha <span aria-hidden="true">👋</span></h2>
+    <p class="content__lead">Here's a quick look at your schedule. Use the button in the sidebar to collapse it on desktop, or the menu icon above to open it on mobile.</p>
+
+    <div class="stats">
+      <div class="stat-card">
+        <span class="stat-card__label">Tasks Due Today</span>
+        <span class="stat-card__value">6</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__label">In Progress</span>
+        <span class="stat-card__value">4</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__label">Completed This Week</span>
+        <span class="stat-card__value">18</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
