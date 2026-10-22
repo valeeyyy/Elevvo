@@ -4,7 +4,7 @@
   const GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search";
   const REVERSE_GEOCODE_URL = "https://api.bigdatacloud.net/data/reverse-geocode-client";
   const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
-  const FALLBACK_CITY = { name: "London", admin1: "England", country: "United Kingdom", lat: 51.5072, lon: -0.1276 };
+  const FALLBACK_CITY = { name: "Jakarta", admin1: "Jakarta", country: "Indonesia", lat: -6.2088, lon: 106.8456 };
 
   const WEATHER_TEXT = {
     0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -33,6 +33,26 @@
 
   function weatherText(code) {
     return WEATHER_TEXT[code] || "Unknown conditions";
+  }
+
+  // One hue per condition, running warm (sun) to cool (storm) — never an
+  // arbitrary multi-colour kit. Chrome (brand mark, buttons) stays on the
+  // fixed --accent; only the condition glyphs use this.
+  const WEATHER_HUE = {
+    sun: "#f2a93b",
+    "cloud-sun": "#e3a94a",
+    moon: "#8aa9d6",
+    "cloud-moon": "#7e93b8",
+    cloud: "#93a0b3",
+    fog: "#8d97a8",
+    drizzle: "#5fa8d8",
+    rain: "#4f93c9",
+    snow: "#a9dced",
+    thunder: "#5f7a9e",
+  };
+
+  function weatherHue(iconName) {
+    return WEATHER_HUE[iconName] || "var(--accent)";
   }
 
   // ---------- DOM helper (no innerHTML for API/user-derived content) ----------
@@ -193,11 +213,11 @@
   function geoErrorMessage(err) {
     switch (err.code) {
       case err.PERMISSION_DENIED:
-        return "Location access was denied. Showing London instead — search for your own city above.";
+        return `Location access was denied. Showing ${FALLBACK_CITY.name} instead — search for your own city above.`;
       case err.TIMEOUT:
-        return "Finding your location took too long. Showing London instead.";
+        return `Finding your location took too long. Showing ${FALLBACK_CITY.name} instead.`;
       default:
-        return "Your location is unavailable right now. Showing London instead.";
+        return `Your location is unavailable right now. Showing ${FALLBACK_CITY.name} instead.`;
     }
   }
 
@@ -211,7 +231,7 @@
 
   function locateCurrentCity() {
     if (!("geolocation" in navigator)) {
-      useFallbackCity("Location isn't supported in this browser. Showing London instead.");
+      useFallbackCity(`Location isn't supported in this browser. Showing ${FALLBACK_CITY.name} instead.`);
       return;
     }
 
@@ -414,23 +434,33 @@
       )
     );
 
+    function kpi(glyph, label, value) {
+      return h(
+        "li",
+        null,
+        h("span", { class: "kpi__label-row" }, icon(glyph, "kpi-icon"), h("span", { class: "kpi__label" }, label)),
+        h("span", { class: "kpi__value" }, value)
+      );
+    }
+
     const kpis = h(
       "ul",
       { class: "city-card__kpis" },
-      h("li", null, h("span", { class: "kpi__label" }, "Humidity"), h("span", { class: "kpi__value" }, `${Math.round(current.relative_humidity_2m)}%`)),
-      h("li", null, h("span", { class: "kpi__label" }, "Wind"), h("span", { class: "kpi__value" }, formatWind(current.wind_speed_10m, unit))),
-      h("li", null, h("span", { class: "kpi__label" }, "Chance of rain"), h("span", { class: "kpi__value" }, `${Math.round(daily.precipitation_probability_max[0] ?? 0)}%`))
+      kpi("droplet", "Humidity", `${Math.round(current.relative_humidity_2m)}%`),
+      kpi("wind", "Wind", formatWind(current.wind_speed_10m, unit)),
+      kpi("umbrella", "Rain", `${Math.round(daily.precipitation_probability_max[0] ?? 0)}%`)
     );
 
     const forecast = h(
       "ul",
       { class: "city-card__forecast" },
-      [1, 2, 3].map((i) =>
-        h(
+      [1, 2, 3].map((i) => {
+        const dayIcon = weatherIconName(daily.weather_code[i], true);
+        return h(
           "li",
-          { class: "forecast-day" },
+          { class: "forecast-day", style: `--day-hue: ${weatherHue(dayIcon)}` },
           h("span", { class: "forecast-day__label" }, dayLabel(daily.time[i], i - 1)),
-          icon(weatherIconName(daily.weather_code[i], true)),
+          icon(dayIcon),
           h(
             "span",
             { class: "forecast-day__range" },
@@ -438,11 +468,14 @@
             " ",
             h("span", { class: "forecast-day__lo" }, `${formatTemp(daily.temperature_2m_min[i], unit)}°`)
           )
-        )
-      )
+        );
+      })
     );
 
-    return h("div", null, now, kpis, forecast);
+    return {
+      content: h("div", { class: "city-card__content" }, now, kpis, forecast),
+      watermark: icon(iconName, "city-card__watermark"),
+    };
   }
 
   function renderCity(city) {
@@ -476,17 +509,26 @@
     const top = h("div", { class: "city-card__top" }, heading, actions);
 
     let body;
+    let watermark = null;
+    let cardHue = "";
     if (city.status === "locating" || city.status === "loading") {
       body = renderSkeleton(city.isPrimary);
     } else if (city.status === "error") {
       body = renderError(city);
     } else {
-      body = renderBody(city);
+      const rendered = renderBody(city);
+      body = rendered.content;
+      watermark = rendered.watermark;
+      cardHue = weatherHue(weatherIconName(city.data.current.weather_code, city.data.current.is_day === 1));
     }
 
     return h(
       "li",
-      { class: city.isPrimary ? "city-card city-card--primary" : "city-card" },
+      {
+        class: city.isPrimary ? "city-card city-card--primary" : "city-card",
+        style: cardHue ? `--card-hue: ${cardHue}` : null,
+      },
+      watermark,
       top,
       body
     );
