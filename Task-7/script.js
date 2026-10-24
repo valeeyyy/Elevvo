@@ -2,9 +2,9 @@
   "use strict";
 
   const GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search";
-  const REVERSE_GEOCODE_URL = "https://api.bigdatacloud.net/data/reverse-geocode-client";
   const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
-  const FALLBACK_CITY = { name: "Jakarta", admin1: "Jakarta", country: "Indonesia", lat: -6.2088, lon: 106.8456 };
+  const DEFAULT_CITY = { name: "Paris", admin1: "Île-de-France", country: "France", lat: 48.8566, lon: 2.3522 };
+  const SIMULATED_CURRENT_LOCATION = { name: "Jakarta", admin1: "Jakarta", country: "Indonesia", lat: -6.2088, lon: 106.8456 };
 
   const WEATHER_TEXT = {
     0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -35,9 +35,6 @@
     return WEATHER_TEXT[code] || "Unknown conditions";
   }
 
-  // One hue per condition, running warm (sun) to cool (storm) — never an
-  // arbitrary multi-colour kit. Chrome (brand mark, buttons) stays on the
-  // fixed --accent; only the condition glyphs use this.
   const WEATHER_HUE = {
     sun: "#f2a93b",
     "cloud-sun": "#e3a94a",
@@ -54,8 +51,6 @@
   function weatherHue(iconName) {
     return WEATHER_HUE[iconName] || "var(--accent)";
   }
-
-  // ---------- DOM helper (no innerHTML for API/user-derived content) ----------
 
   function h(tag, attrs, ...children) {
     const node = document.createElement(tag);
@@ -77,19 +72,32 @@
     return node;
   }
 
-  function icon(name, extraClass) {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("class", extraClass ? `icon ${extraClass}` : "icon");
-    svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("focusable", "false");
-    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    use.setAttributeNS("http://www.w3.org/1999/xlink", "href", `#icon-${name}`);
-    use.setAttribute("href", `#icon-${name}`);
-    svg.append(use);
-    return svg;
-  }
+  const ICON_MAP = {
+    search: "magnifying-glass",
+    close: "xmark",
+    locate: "location-crosshairs",
+    refresh: "arrow-rotate-right",
+    sun: "sun",
+    moon: "moon",
+    cloud: "cloud",
+    "cloud-sun": "cloud-sun",
+    "cloud-moon": "cloud-moon",
+    fog: "smog",
+    drizzle: "cloud-rain",
+    rain: "cloud-showers-heavy",
+    snow: "snowflake",
+    thunder: "cloud-bolt",
+    droplet: "droplet",
+    wind: "wind",
+    umbrella: "umbrella",
+  };
 
-  // ---------- Units ----------
+  function icon(name, extraClass) {
+    const i = document.createElement("i");
+    i.className = `icon fa-solid fa-${ICON_MAP[name] || name}${extraClass ? ` ${extraClass}` : ""}`;
+    i.setAttribute("aria-hidden", "true");
+    return i;
+  }
 
   function celsiusToFahrenheit(c) {
     return (c * 9) / 5 + 32;
@@ -109,15 +117,11 @@
     return `${Math.round(value)} ${unit === "f" ? "mph" : "km/h"}`;
   }
 
-  // ---------- Dates ----------
-
   function dayLabel(isoDate, index) {
     if (index === 0) return "Tomorrow";
     const date = new Date(`${isoDate}T00:00:00`);
     return new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(date);
   }
-
-  // ---------- State ----------
 
   const state = {
     unit: "c",
@@ -154,26 +158,63 @@
     }
   }
 
-  // ---------- API ----------
+  const FEATURE_CODE_RANK = {
+    PPLC: 5, 
+    PPLA: 4,
+    PPLA2: 3,
+    PPLA3: 2,
+    PPLA4: 1,
+    PPL: 0, 
+    PPLL: -2, 
+    PPLX: -3, 
+  };
+
+  function normalizeForMatch(str) {
+    return (str || "").trim().toLowerCase();
+  }
+
+  function scoreGeocodeResult(result, query) {
+    const name = normalizeForMatch(result.name);
+    const q = normalizeForMatch(query);
+    let score = 0;
+
+    if (name === q) score += 100;
+    else if (name.startsWith(q)) score += 40;
+    else if (name.includes(q)) score += 10;
+
+    score += (FEATURE_CODE_RANK[result.feature_code] ?? 0) * 10;
+
+    if (typeof result.population === "number" && result.population > 0) {
+      score += Math.log10(result.population);
+    }
+
+    return score;
+  }
+
+  function dedupeGeocodeResults(results) {
+    const seen = new Set();
+    return results.filter((result) => {
+      const key = `${normalizeForMatch(result.name)}|${normalizeForMatch(result.admin1)}|${normalizeForMatch(result.country)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function rankGeocodeResults(results, query) {
+    return dedupeGeocodeResults(results)
+      .map((result, index) => ({ result, index, score: scoreGeocodeResult(result, query) }))
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .map((entry) => entry.result);
+  }
 
   async function geocodeCity(query) {
-    const url = `${GEOCODE_URL}?name=${encodeURIComponent(query)}&count=5&language=en&format=json`;
+    const url = `${GEOCODE_URL}?name=${encodeURIComponent(query)}&count=10&language=en&format=json`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("geocode-failed");
     const json = await res.json();
-    return json.results || [];
-  }
-
-  async function reverseGeocode(lat, lon) {
-    const url = `${REVERSE_GEOCODE_URL}?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("reverse-geocode-failed");
-    const json = await res.json();
-    return {
-      name: json.city || json.locality || json.principalSubdivision || "Your location",
-      admin1: json.principalSubdivision || "",
-      country: json.countryName || "",
-    };
+    const results = json.results || [];
+    return rankGeocodeResults(results, query).slice(0, 5);
   }
 
   async function fetchWeather(lat, lon) {
@@ -192,8 +233,6 @@
     return res.json();
   }
 
-  // ---------- Loading a city's weather ----------
-
   async function loadCityWeather(city) {
     city.status = "loading";
     render();
@@ -208,57 +247,19 @@
     render();
   }
 
-  // ---------- Geolocation ----------
-
-  function geoErrorMessage(err) {
-    switch (err.code) {
-      case err.PERMISSION_DENIED:
-        return `Location access was denied. Showing ${FALLBACK_CITY.name} instead — search for your own city above.`;
-      case err.TIMEOUT:
-        return `Finding your location took too long. Showing ${FALLBACK_CITY.name} instead.`;
-      default:
-        return `Your location is unavailable right now. Showing ${FALLBACK_CITY.name} instead.`;
-    }
-  }
-
-  function useFallbackCity(notice) {
-    const fallback = makeCity({ ...FALLBACK_CITY, isPrimary: true, isCurrentLocation: false });
-    fallback.notice = notice;
-    setPrimaryCity(fallback);
+  function loadDefaultCity() {
+    const city = makeCity({ ...DEFAULT_CITY, isPrimary: true, isCurrentLocation: false });
+    setPrimaryCity(city);
     render();
-    loadCityWeather(fallback);
+    loadCityWeather(city);
   }
 
-  function locateCurrentCity() {
-    if (!("geolocation" in navigator)) {
-      useFallbackCity(`Location isn't supported in this browser. Showing ${FALLBACK_CITY.name} instead.`);
-      return;
-    }
-
-    const locating = makeCity({ name: "Finding your location…", isPrimary: true, isCurrentLocation: true });
-    setPrimaryCity(locating);
+  function useCurrentLocation() {
+    const city = makeCity({ ...SIMULATED_CURRENT_LOCATION, isPrimary: true, isCurrentLocation: true });
+    setPrimaryCity(city);
     render();
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        let place;
-        try {
-          place = await reverseGeocode(latitude, longitude);
-        } catch {
-          place = { name: "Your location", admin1: "", country: "" };
-        }
-        const city = makeCity({ ...place, lat: latitude, lon: longitude, isPrimary: true, isCurrentLocation: true });
-        setPrimaryCity(city);
-        render();
-        loadCityWeather(city);
-      },
-      (err) => useFallbackCity(geoErrorMessage(err)),
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
-    );
+    loadCityWeather(city);
   }
-
-  // ---------- Search ----------
 
   const searchForm = document.getElementById("searchForm");
   const cityInput = document.getElementById("cityInput");
@@ -334,6 +335,7 @@
     }
 
     setSearchBusy(true);
+    showResultsStatus("Searching…");
     try {
       const results = await geocodeCity(query);
       if (results.length === 0) {
@@ -358,7 +360,7 @@
     }
   });
 
-  // ---------- Unit toggle ----------
+  document.getElementById("useCurrentLocationBtn").addEventListener("click", useCurrentLocation);
 
   const unitC = document.getElementById("unitC");
   const unitF = document.getElementById("unitF");
@@ -373,14 +375,10 @@
   unitC.addEventListener("click", () => setUnit("c"));
   unitF.addEventListener("click", () => setUnit("f"));
 
-  // ---------- Remove a city ----------
-
   function removeCity(id) {
     state.cities = state.cities.filter((c) => c.id !== id);
     render();
   }
-
-  // ---------- Rendering ----------
 
   function renderSkeleton(isPrimary) {
     return h(
@@ -494,11 +492,7 @@
       "div",
       { class: "city-card__actions" },
       city.isPrimary
-        ? h(
-            "button",
-            { type: "button", class: "icon-btn", "aria-label": "Refresh weather for my location", onclick: locateCurrentCity },
-            icon("locate")
-          )
+        ? null
         : h(
             "button",
             { type: "button", class: "icon-btn", "aria-label": `Remove ${city.name}`, onclick: () => removeCity(city.id) },
@@ -539,7 +533,5 @@
     list.replaceChildren(...state.cities.map(renderCity));
   }
 
-  // ---------- Init ----------
-
-  locateCurrentCity();
+  loadDefaultCity();
 })();
