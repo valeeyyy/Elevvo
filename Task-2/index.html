@@ -11,6 +11,23 @@
 </head>
 <body>
 
+<div class="bg" aria-hidden="true">
+  <span class="bg__ring bg__ring--a"></span>
+  <span class="bg__ring bg__ring--b"></span>
+  <span class="bg__blob bg__blob--a"></span>
+  <span class="bg__blob bg__blob--b"></span>
+  <svg class="bg__icon bg__icon--envelope" viewBox="0 0 120 84" fill="none">
+    <rect x="2" y="2" width="116" height="80" rx="8" stroke="currentColor" stroke-width="2"/>
+    <path d="M4 7 60 49 116 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <svg class="bg__icon bg__icon--plane" viewBox="0 0 100 100" fill="none">
+    <path d="M94 8 6 44l30 12 12 30L94 8ZM36 56 94 8" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>
+  <svg class="bg__icon bg__icon--bubble" viewBox="0 0 100 90" fill="none">
+    <path d="M12 8h76a6 6 0 0 1 6 6v46a6 6 0 0 1-6 6H44L24 84V66H12a6 6 0 0 1-6-6V14a6 6 0 0 1 6-6Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+  </svg>
+</div>
+
 <main class="page">
   <div class="card">
     <section class="panel" aria-label="Contact information">
@@ -21,7 +38,7 @@
         <dl class="panel__meta">
           <div class="panel__meta-item">
             <dt>Email</dt>
-            <dd><a href="mailto:hello@yourstudio.com">hello@yourstudio.com</a></dd>
+            <dd><a href="mailto:claire.winslow@gmail.com">claire.winslow@gmail.com</a></dd>
           </div>
           <div class="panel__meta-item">
             <dt>Hours</dt>
@@ -65,13 +82,25 @@
         </div>
 
         <div class="form__footer">
-          <p class="form__status" id="formStatus" role="status" aria-live="polite"></p>
           <button type="submit" class="button">Send message</button>
         </div>
       </form>
     </section>
   </div>
 </main>
+
+<div class="modal" id="successModal" role="dialog" aria-modal="true" aria-labelledby="successTitle" aria-describedby="successText" hidden>
+  <div class="modal__box">
+    <div class="modal__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12.5 10 17.5 19 7.5"/>
+      </svg>
+    </div>
+    <h2 class="modal__title" id="successTitle">Message sent</h2>
+    <p class="modal__text" id="successText">Thanks for reaching out. We'll reply within two working days.</p>
+    <button type="button" class="button modal__close" id="modalClose">Done</button>
+  </div>
+</div>
 
 <script src="script.js"></script>
 </body>

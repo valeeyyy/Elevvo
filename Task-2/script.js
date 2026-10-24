@@ -4,8 +4,37 @@
   const form = document.getElementById("contactForm");
   if (!form) return;
 
-  const status = document.getElementById("formStatus");
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const modal = document.getElementById("successModal");
+  const modalClose = document.getElementById("modalClose");
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  const openModal = () => {
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    modalClose.focus();
+  };
+
+  const closeModal = () => {
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    submitButton.focus();
+  };
+
+  modalClose.addEventListener("click", closeModal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !modal.hidden) closeModal();
+  });
+  const emailPattern =
+    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,}$/;
+
+  const isRealEmail = (value) => {
+    const [local] = value.split("@");
+    if (local.startsWith(".") || local.endsWith(".") || local.includes("..")) return false;
+    return emailPattern.test(value);
+  };
 
   const fields = {
     fullName: {
@@ -18,7 +47,7 @@
       error: document.getElementById("emailError"),
       validate: (value) => {
         if (!value.trim()) return "Enter your email address.";
-        if (!emailPattern.test(value.trim())) return "Enter a valid email address.";
+        if (!isRealEmail(value.trim())) return "Enter a valid email address, e.g. name@example.com.";
         return "";
       },
     },
@@ -64,13 +93,12 @@
     const firstInvalidKey = Object.keys(fields).find((key, index) => messages[index]);
 
     if (firstInvalidKey) {
-      if (status) status.textContent = "";
       fields[firstInvalidKey].input.focus();
       return;
     }
 
-    if (status) status.textContent = "Message sent. Thanks for reaching out.";
     form.reset();
     Object.keys(fields).forEach((key) => setFieldError(fields[key], ""));
+    openModal();
   });
 })();
