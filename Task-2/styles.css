@@ -41,7 +41,6 @@ body {
   overflow-x: hidden;
 }
 
-/* decorative background layer behind the card */
 .bg {
   position: fixed;
   inset: 0;
@@ -299,7 +298,6 @@ body {
   resize: vertical;
   min-height: calc(1.6rem * 5 + 1.4rem + 2px);
   line-height: 1.6rem;
-  /* ruled lines: one per text line, scrolling with the text and starting at the top padding */
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0,
