@@ -33,7 +33,7 @@ export function JobDetailsModal({ job, onClose, onDelete }: JobDetailsModalProps
   const rows: readonly { label: string; value: string | null; href?: string }[] = [
     { label: "Applied on", value: formatLongDate(job.appliedDate) },
     { label: "Location", value: job.location || null },
-    { label: "Salary", value: job.salary || null },
+    { label: "Salary", value: job.salary?.replace(/\s*[–—]\s*/g, " - ") || null },
     { label: "Contact", value: job.contactName || null },
     { label: "Email", value: job.contactEmail || null, href: job.contactEmail ? `mailto:${job.contactEmail}` : undefined },
     { label: "Listing", value: job.url || null, href: job.url || undefined },

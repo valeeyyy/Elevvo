@@ -83,7 +83,7 @@ export function JobCard({ job, overlay = false, onOpen }: JobCardProps) {
           </span>
         ) : null}
         {job.salary ? (
-          <span className="num ml-auto rounded-chip bg-raised px-2 py-0.5 font-medium text-muted">{job.salary}</span>
+          <span className="num ml-auto rounded-chip bg-raised px-2 py-0.5 font-medium text-muted">{job.salary.replace(/\s*[–—]\s*/g, " - ")}</span>
         ) : null}
       </div>
     </li>

@@ -136,7 +136,7 @@ export function AddJobModal({ isOpen, onClose, onSubmit }: AddJobModalProps) {
               label="Salary"
               error={errors.salary?.message}
               inputProps={register("salary")}
-              placeholder="e.g. $120k–$140k…"
+              placeholder="e.g. $120k - $140k…"
               autoComplete="off"
             />
             <Field
