@@ -1,14 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { FolderKanban, LayoutGrid, UserRound, X } from "lucide-react";
-import { projects } from "../data/mock";
 
 const links = [
   { to: "/", label: "Overview", icon: LayoutGrid, end: true },
   { to: "/projects", label: "Projects", icon: FolderKanban, end: false },
   { to: "/settings", label: "Profile Settings", icon: UserRound, end: false },
 ];
-
-const activeCount = projects.filter((p) => p.status === "In progress" || p.status === "In review").length;
 
 interface Props {
   open: boolean;
@@ -86,19 +83,6 @@ export default function Sidebar({ open, onClose }: Props) {
             ))}
           </ul>
         </nav>
-
-        <div className="m-3 rounded-xl border border-line bg-canvas p-4">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <span className="relative flex size-2" aria-hidden="true">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-green opacity-60 motion-reduce:hidden" />
-              <span className="relative inline-flex size-2 rounded-full bg-green" />
-            </span>
-            Available for work
-          </div>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted">
-            {activeCount} active projects. Booking new work from mid-December.
-          </p>
-        </div>
       </aside>
     </>
   );
