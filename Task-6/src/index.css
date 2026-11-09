@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply min-h-dvh bg-canvas font-sans text-[15px] leading-normal text-ink antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  ::selection {
+    @apply bg-accent text-canvas;
+  }
+
+  :focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-accent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-line bg-surface;
+  }
+
+  .card-header {
+    @apply flex items-start justify-between gap-4 px-5 pt-5 sm:px-6 sm:pt-6;
+  }
+
+  .card-title {
+    @apply text-[15px] font-semibold tracking-tight text-ink;
+  }
+
+  .card-subtitle {
+    @apply mt-0.5 text-[13px] text-muted;
+  }
+
+  .btn {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-canvas hover:bg-accent-hover;
+  }
+  .btn-secondary {
+    @apply btn border border-line bg-surface text-ink hover:border-strong hover:bg-raised;
+  }
+
+  .link-subtle {
+    @apply rounded text-[13px] font-medium text-muted transition-colors hover:text-ink;
+  }
+
+  .icon-btn {
+    @apply relative inline-grid size-10 place-items-center rounded-lg text-muted transition-colors hover:bg-raised hover:text-ink;
+  }
+
+  .input {
+    @apply h-11 w-full rounded-lg border border-line bg-canvas px-3.5 text-sm text-ink placeholder:text-faint
+      transition-colors hover:border-strong focus:border-accent focus:outline-none
+      aria-[invalid=true]:border-red;
+  }
+
+  .label {
+    @apply mb-2 block text-[13px] font-medium text-muted;
+  }
+
+  .hint {
+    @apply mt-1.5 text-xs text-faint;
+  }
+}
+
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-sector:focus {
+  outline: none;
+}
